@@ -5,12 +5,8 @@ async function createForm(accessToken, title, questions) {
     const auth = new google.auth.OAuth2();
     auth.setCredentials({ access_token: accessToken });
 
-    const forms = google.forms({
-      version: 'v1', 
-      auth,
-    });
+    const forms = google.forms({ version: 'v1', auth });
 
-    // Create form
     const createRes = await forms.forms.create({
       requestBody: {
         info: {
@@ -22,7 +18,6 @@ async function createForm(accessToken, title, questions) {
 
     const formId = createRes.data.formId;
 
-    // Add questions
     const requests = questions.map((q, index) => ({
       createItem: {
         item: {
@@ -31,24 +26,22 @@ async function createForm(accessToken, title, questions) {
             question: {
               required: q.required !== false,
               textQuestion: q.type === 'text' ? {} : undefined,
-              choiceQuestion: q.type === 'multiple_choice' ? {
-                type: 'RADIO',
-                options: q.options.map(option => ({ value: option })),
-              } : undefined,
+              choiceQuestion: q.type === 'multiple_choice'
+                ? {
+                    type: 'RADIO',
+                    options: q.options.map(opt => ({ value: opt })),
+                  }
+                : undefined,
             },
           },
         },
-        location: {
-          index,
-        },
+        location: { index },
       },
     }));
 
     await forms.forms.batchUpdate({
       formId,
-      requestBody: {
-        requests,
-      },
+      requestBody: { requests },
     });
 
     return {
@@ -61,4 +54,6 @@ async function createForm(accessToken, title, questions) {
     throw new Error(`Failed to create form: ${error.message}`);
   }
 }
-export default createForm ;
+
+export default createForm;
+  
